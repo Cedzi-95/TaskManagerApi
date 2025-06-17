@@ -1,6 +1,6 @@
 public interface ITaskService
 {
-    public Task CreateTaskAsync(string userId);
+    public Task<TaskEntity> CreateTaskAsync(string userId, TaskDto taskDto);
     public Task<IEnumerable<TaskEntity>> GetTasksAsync(string userId);
     public Task<TaskEntity> GetTaskById(string userId, int taskId);
     public Task DeleteTaskAsync(string userId);
@@ -18,9 +18,25 @@ public class TaskService : ITaskService
         this.taskRepository = taskRepository;
         this.userService = userService;
     }
-    public Task CreateTaskAsync(string userId)
+    public async Task<TaskEntity> CreateTaskAsync(string userId, TaskDto taskDto)
     {
-        throw new NotImplementedException();
+        var user = await userService.GetUserbyId(userId);
+        if (user == null)
+        {
+            throw new ArgumentException("User not found");
+        }
+        var task = new TaskEntity
+        {
+            Title = taskDto.Title,
+            Description = taskDto.Description,
+            CreateAt = DateTime.UtcNow,
+            Deadline = taskDto.Deadline,
+            IsCompleted = taskDto.IsCompleted,
+            IsPriority = taskDto.IsPriority
+        };
+        await taskRepository.CreateTaskAsync(task);
+        return task;
+         
     }
 
     public Task DeleteTaskAsync(string userId)
