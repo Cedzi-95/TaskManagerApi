@@ -1,10 +1,11 @@
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 
 public interface IUserService
 {
     public Task<RegisterUserResponse> RegisterAsync(RegisterUserDto request);
     public Task<SignInUserResponse> LoginAsync(SignInUserRequest request);
-    public Task DeleteUserAsync(string userId);
+    public Task<UserEntity> DeleteUserAsync(string userId);
     public Task<IEnumerable<UserEntity>> GetUsers();
     public Task<UserEntity> GetUserbyId(string userId);
 
@@ -21,19 +22,32 @@ public class UserService : IUserService
         this.userManager = userManager;
         this.signInManager = signInManager;
     }
-    public Task DeleteUserAsync(string userId)
+    public async Task<UserEntity> DeleteUserAsync(string userId)
     {
-        throw new NotImplementedException();
+        var user = await userManager.FindByIdAsync(userId);
+        if (user == null)
+
+            return null!;
+
+        var result = await userManager.DeleteAsync(user);
+        if (result.Succeeded)
+            return null!;
+
+        throw new IdentityException($"User {user.UserName} could not be deleted");
+       
+       
+        
     }
 
-    public Task<UserEntity> GetUserbyId(string userId)
+    public async Task<UserEntity> GetUserbyId(string userId)
     {
-        throw new NotImplementedException();
+        return await userManager.FindByIdAsync(userId)
+        ?? throw new IdentityException("user not found");
     }
 
-    public Task<IEnumerable<UserEntity>> GetUsers()
+    public async Task<IEnumerable<UserEntity>> GetUsers()
     {
-        throw new NotImplementedException();
+        return await userManager.Users.ToListAsync();
     }
 
     public async Task<SignInUserResponse> LoginAsync(SignInUserRequest request)
@@ -57,7 +71,7 @@ public class UserService : IUserService
                 Email = user.Email
             };
         }
-        throw new IdentityException("Invalid Email or password");
+        throw new IdentityException("Invalid email or password");
     }
 
 
