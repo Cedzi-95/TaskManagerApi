@@ -3,8 +3,8 @@ public interface ITaskService
     public Task<TaskEntity> CreateTaskAsync(string userId, TaskDto taskDto);
     public Task<IEnumerable<TaskEntity>> GetTasksAsync(string userId);
     public Task<TaskEntity> GetTaskById(string userId, int taskId);
-    public Task DeleteTaskAsync(string userId);
-    public Task EditTaskAsync(string userId);
+    public Task DeleteTaskAsync(string userId, int taskId);
+    public Task<TaskEntity> EditTaskAsync(string userId, TaskDto taskDto);
 
 }
 
@@ -39,23 +39,46 @@ public class TaskService : ITaskService
          
     }
 
-    public Task DeleteTaskAsync(string userId)
+    public async Task DeleteTaskAsync(string userId, int taskId)
     {
-        throw new NotImplementedException();
+        var taskEntity = await taskRepository.GetTaskAsync(taskId, userId);
+        if (taskEntity == null)
+        {
+            throw new ArgumentException("task not found");
+        }
+         await taskRepository.DeleteTaskAsync(taskEntity);
+        
     }
 
-    public Task EditTaskAsync(string userId)
+    public async Task<TaskEntity> EditTaskAsync(string userId, TaskDto taskDto)
     {
-        throw new NotImplementedException();
+        var user = await userService.GetUserbyId(userId);
+        if (user == null)
+        {
+            throw new ArgumentException("User not found");
+        }
+        var UpdateTask = new TaskEntity
+        {
+
+            Title = taskDto.Title,
+            Description = taskDto.Description,
+            CreateAt = DateTime.UtcNow,
+            Deadline = taskDto.Deadline,
+            IsCompleted = taskDto.IsCompleted,
+            IsPriority = taskDto.IsPriority
+        };
+        await taskRepository.EditTaskAsync(UpdateTask);
+        return UpdateTask;
+         
     }
 
-    public Task<TaskEntity> GetTaskById(string userId, int taskId)
+    public async Task<TaskEntity> GetTaskById(string userId, int taskId)
     {
-        throw new NotImplementedException();
+        return await taskRepository.GetTaskAsync(taskId, userId);
     }
 
-    public Task<IEnumerable<TaskEntity>> GetTasksAsync(string userId)
+    public async Task<IEnumerable<TaskEntity>> GetTasksAsync(string userId)
     {
-        throw new NotImplementedException();
+        return await taskRepository.GetAllTasksAsync(userId);
     }
 }

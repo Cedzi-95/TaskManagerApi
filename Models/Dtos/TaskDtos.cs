@@ -20,3 +20,4 @@ public class TaskResponse
     public bool IsCompleted { get; set; }
     public bool IsPriority { get; set; }
 }
+
