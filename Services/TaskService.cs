@@ -4,7 +4,7 @@ public interface ITaskService
     public Task<IEnumerable<TaskEntity>> GetTasksAsync(string userId);
     public Task<TaskEntity> GetTaskById(string userId, int taskId);
     public Task DeleteTaskAsync(string userId, int taskId);
-    public Task<TaskEntity> EditTaskAsync(string userId, TaskDto taskDto);
+    public Task<TaskEntity> EditTaskAsync(int taskId, string userId, TaskDto taskDto);
 
 }
 
@@ -50,13 +50,14 @@ public class TaskService : ITaskService
         
     }
 
-    public async Task<TaskEntity> EditTaskAsync(string userId, TaskDto taskDto)
+    public async Task<TaskEntity> EditTaskAsync(int taskId, string userId, TaskDto taskDto)
     {
         var user = await userService.GetUserbyId(userId);
         if (user == null)
         {
             throw new ArgumentException("User not found");
         }
+        var task = await taskRepository.GetTaskAsync(taskId, userId);
         var UpdateTask = new TaskEntity
         {
 

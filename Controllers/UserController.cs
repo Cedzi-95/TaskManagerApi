@@ -1,4 +1,5 @@
 using System.Net;
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -46,20 +47,20 @@ public class UserController : ControllerBase
         }
     }
 
-    // [HttpDelete("{userId}")]
-    // public async Task<IActionResult> DeleteAsync(string userId)
-    // {
-    //     try
-    //     {
-          
-    //        var deletedUser = await userService.DeleteUserAsync(userId);
+    [HttpDelete("{userId}")]
+    public async Task<IActionResult> DeleteAsync()
+    {
+        try
+        {
+            string userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? throw new Exception();
+            await userService.DeleteUserAsync(userId);
+            return NoContent();
 
-    //         return Ok(new { message = "User deleted successfully" });
-    //     }
-    //     catch
-    //     {
-    //         BadRequest($"There was an issue deleting this user with id {userId}");
-    //     }
+        }
+        catch
+        {
+           return BadRequest($"There was an issue deleting this user");
+        }
 
-    // }
+    }
 }
