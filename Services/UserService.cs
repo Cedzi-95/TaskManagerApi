@@ -93,7 +93,7 @@ public class UserService : IUserService
         return new RegisterUserResponse
         {
             Id = user.Id,
-            Username = user.UserName,
+           Username = user.UserName,
             Email = user.Email
         };
 

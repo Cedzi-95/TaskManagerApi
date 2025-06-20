@@ -6,23 +6,32 @@ using Microsoft.AspNetCore.Mvc;
 [Route("task")]
 public class TaskController : ControllerBase
 {
-    private readonly IUserService userService;
     private readonly ITaskService taskService;
 
-    public TaskController(IUserService userService, ITaskService taskService)
+    public TaskController(ITaskService taskService)
     {
-        this.userService = userService;
         this.taskService = taskService;
     }
 
     [HttpPost("create")]
+    [Authorize]
     public async Task<IActionResult> CreateTask([FromBody] TaskDto taskDto)
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? throw new Exception();
 
 
         var task = await taskService.CreateTaskAsync(userId, taskDto);
-        return Ok(task);
+        var response = new TaskResponse
+        {
+            
+            Title = taskDto.Title,
+            Description = taskDto.Description,
+            CreateAt = DateTime.UtcNow,
+            Deadline = taskDto.Deadline,
+            IsCompleted = taskDto.IsCompleted,
+            IsPriority = taskDto.IsCompleted
+        };
+        return Created($"Created new task Id {task.Id}", response);
     }
 
     [HttpGet]
@@ -42,12 +51,21 @@ public class TaskController : ControllerBase
 
     }
 
-    [HttpPut("update/{taskId}")]
-    public async Task<IActionResult> UpdateTask([FromBody] int taskId, TaskDto taskDto)
+    [HttpPut("{taskId}")]
+    public async Task<IActionResult> UpdateTask([FromBody]  TaskDto taskDto)
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? throw new Exception();
-        var task = await taskService.EditTaskAsync(taskId, userId, taskDto);
-        return Ok(task);
+        var task = await taskService.EditTaskAsync(taskDto);
+        var response = new TaskResponse
+        {
+            Title = taskDto.Title,
+            Description = taskDto.Description,
+            CreateAt = DateTime.UtcNow,
+            Deadline = taskDto.Deadline,
+            IsCompleted = taskDto.IsCompleted,
+            IsPriority = taskDto.IsCompleted
+        };
+        return Created($"Created new task Id {task.Id}", response);
     }
 
     [HttpDelete]

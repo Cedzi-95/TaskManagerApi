@@ -8,8 +8,8 @@ public class RegisterUserDto
 
 public class RegisterUserResponse
 {
-    public string? Username { get; set; }
-    public string? Email { get; set; }
+    public  string? Username { get; set; }
+    public  string? Email { get; set; }
     public string? Id { get; set; }
 
 }

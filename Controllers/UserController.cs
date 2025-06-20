@@ -48,6 +48,7 @@ public class UserController : ControllerBase
     }
 
     [HttpDelete("{userId}")]
+    
     public async Task<IActionResult> DeleteAsync()
     {
         try
@@ -59,7 +60,7 @@ public class UserController : ControllerBase
         }
         catch
         {
-           return BadRequest($"There was an issue deleting this user");
+            return BadRequest($"There was an issue deleting this user");
         }
 
     }

@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore;
 public interface ITaskRepository
 {
     public Task CreateTaskAsync(TaskEntity taskEntity);
-    public Task<TaskEntity> GetTaskAsync(int taskId, string userId);
+    public Task<TaskEntity> GetTaskAsync(int taskId);
     public Task<IEnumerable<TaskEntity>> GetAllTasksAsync(string userId);
     public Task EditTaskAsync(TaskEntity taskEntity);
     public Task DeleteTaskAsync(TaskEntity taskEntity);
@@ -41,7 +41,7 @@ public class TaskRepository : ITaskRepository
         return tasks;
     }
 
-    public async Task<TaskEntity> GetTaskAsync(int taskId, string userId)
+    public async Task<TaskEntity> GetTaskAsync(int taskId)
     {
         return await context.Tasks.FindAsync(taskId) ?? throw new ArgumentException("task not found");
         

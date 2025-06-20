@@ -4,7 +4,7 @@ public interface ITaskService
     public Task<IEnumerable<TaskEntity>> GetTasksAsync(string userId);
     public Task<TaskEntity> GetTaskById(string userId, int taskId);
     public Task DeleteTaskAsync(string userId, int taskId);
-    public Task<TaskEntity> EditTaskAsync(int taskId, string userId, TaskDto taskDto);
+    public Task<TaskEntity> EditTaskAsync( TaskDto taskDto);
 
 }
 
@@ -27,6 +27,7 @@ public class TaskService : ITaskService
         }
         var task = new TaskEntity
         {
+            Id = 0,
             Title = taskDto.Title,
             Description = taskDto.Description,
             CreateAt = DateTime.UtcNow,
@@ -41,7 +42,7 @@ public class TaskService : ITaskService
 
     public async Task DeleteTaskAsync(string userId, int taskId)
     {
-        var taskEntity = await taskRepository.GetTaskAsync(taskId, userId);
+        var taskEntity = await taskRepository.GetTaskAsync(taskId);
         if (taskEntity == null)
         {
             throw new ArgumentException("task not found");
@@ -50,14 +51,19 @@ public class TaskService : ITaskService
         
     }
 
-    public async Task<TaskEntity> EditTaskAsync(int taskId, string userId, TaskDto taskDto)
+    public async Task<TaskEntity> EditTaskAsync(TaskDto taskDto)
     {
-        var user = await userService.GetUserbyId(userId);
-        if (user == null)
-        {
-            throw new ArgumentException("User not found");
-        }
-        var task = await taskRepository.GetTaskAsync(taskId, userId);
+        // var user = await userService.GetUserbyId(userId);
+        // if (user == null)
+        // {
+        //     throw new ArgumentException("User not found");
+        // }
+        // var task = await taskRepository.GetTaskAsync(taskId);
+        // if (task.Id != taskId)
+        // {
+        //     throw new ArgumentException("No such task id was found");
+        // }
+
         var UpdateTask = new TaskEntity
         {
 
@@ -75,7 +81,7 @@ public class TaskService : ITaskService
 
     public async Task<TaskEntity> GetTaskById(string userId, int taskId)
     {
-        return await taskRepository.GetTaskAsync(taskId, userId);
+        return await taskRepository.GetTaskAsync(taskId);
     }
 
     public async Task<IEnumerable<TaskEntity>> GetTasksAsync(string userId)
