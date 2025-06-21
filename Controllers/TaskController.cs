@@ -8,29 +8,34 @@ using Microsoft.VisualBasic;
 public class TaskController : ControllerBase
 {
     private readonly ITaskService taskService;
+    private readonly IUserService userService;
 
-    public TaskController(ITaskService taskService)
+    public TaskController(ITaskService taskService, IUserService userService)
     {
         this.taskService = taskService;
+        this.userService = userService;
     }
 
     [HttpPost("create")]
     [Authorize]
-    public async Task<IActionResult> CreateTask([FromBody] TaskDto taskDto)
+    public async Task<IActionResult> CreateTask([FromBody] CreateTaskDto taskDto)
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? throw new Exception();
+        var user = await userService.GetUserbyId(taskDto.UserId!);
+
 
 
         var task = await taskService.CreateTaskAsync(userId, taskDto);
-        var response = new TaskResponse
+        var response = new CreateTaskResponse
         {
-            
+
             Title = taskDto.Title,
             Description = taskDto.Description,
             CreateAt = DateTime.UtcNow,
             Deadline = taskDto.Deadline,
             IsCompleted = taskDto.IsCompleted,
-            IsPriority = taskDto.IsCompleted
+            IsPriority = taskDto.IsCompleted,
+            CreatedBy = user.UserName
         };
         return Created($"Created new task Id {task.Id}", response);
     }
@@ -39,6 +44,8 @@ public class TaskController : ControllerBase
     public async Task<IActionResult> GetAllTaskAsync()
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? throw new Exception();
+
+
         var tasks = await taskService.GetTasksAsync(userId);
         return Ok(tasks);
     }
@@ -55,17 +62,24 @@ public class TaskController : ControllerBase
     [HttpPut("{taskId}")]
     public async Task<IActionResult> UpdateTask([FromBody] UpdateTaskDto updateTaskDto)
     {
-        var user = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? throw new Exception();
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? throw new Exception();
+        var user = await userService.GetUserbyId(updateTaskDto.UserId!);
+        if (user == null)
+        {
+            return NotFound();
+        }
+
 
         var result = await taskService.EditTaskAsync(updateTaskDto);
-        var response = new TaskResponse
+        var response = new UpdateTaskResponse
         {
             Title = updateTaskDto.Title,
             Description = updateTaskDto.Description,
             CreateAt = DateTime.UtcNow,
             Deadline = updateTaskDto.Deadline,
             IsCompleted = updateTaskDto.IsCompleted,
-            IsPriority = updateTaskDto.IsPriority
+            IsPriority = updateTaskDto.IsPriority,
+            UpdatedBy = user.UserName
         };
         return Created($"Task '{result.Title}' has been modified: ", response);
     }

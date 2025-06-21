@@ -179,12 +179,12 @@ namespace TaskManagerApi.Migrations
                     b.Property<string>("Title")
                         .HasColumnType("text");
 
-                    b.Property<string>("UserEntityId")
+                    b.Property<string>("userId")
                         .HasColumnType("text");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("UserEntityId");
+                    b.HasIndex("userId");
 
                     b.ToTable("Tasks");
                 });
@@ -306,9 +306,11 @@ namespace TaskManagerApi.Migrations
 
             modelBuilder.Entity("TaskEntity", b =>
                 {
-                    b.HasOne("UserEntity", null)
+                    b.HasOne("UserEntity", "UserId")
                         .WithMany("Tasks")
-                        .HasForeignKey("UserEntityId");
+                        .HasForeignKey("userId");
+
+                    b.Navigation("UserId");
                 });
 
             modelBuilder.Entity("UserEntity", b =>

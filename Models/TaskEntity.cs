@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations.Schema;
+
 public class TaskEntity
 {
     public required int Id { get; set; }
@@ -7,5 +9,7 @@ public class TaskEntity
     public required DateTime Deadline { get; set; }
     public required bool IsCompleted { get; set; }
     public bool IsPriority { get; set; }
+    [ForeignKey("userId")]
+    public UserEntity? UserId { get; set; }
 
 }

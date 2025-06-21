@@ -169,14 +169,14 @@ namespace TaskManagerApi.Migrations
                     Deadline = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     IsCompleted = table.Column<bool>(type: "boolean", nullable: false),
                     IsPriority = table.Column<bool>(type: "boolean", nullable: false),
-                    UserEntityId = table.Column<string>(type: "text", nullable: true)
+                    userId = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Tasks", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Tasks_AspNetUsers_UserEntityId",
-                        column: x => x.UserEntityId,
+                        name: "FK_Tasks_AspNetUsers_userId",
+                        column: x => x.userId,
                         principalTable: "AspNetUsers",
                         principalColumn: "Id");
                 });
@@ -219,9 +219,9 @@ namespace TaskManagerApi.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_Tasks_UserEntityId",
+                name: "IX_Tasks_userId",
                 table: "Tasks",
-                column: "UserEntityId");
+                column: "userId");
         }
 
         /// <inheritdoc />

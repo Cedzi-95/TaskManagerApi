@@ -1,6 +1,6 @@
 public interface ITaskService
 {
-    public Task<TaskEntity> CreateTaskAsync(string userId, TaskDto taskDto);
+    public Task<TaskEntity> CreateTaskAsync(string userId, CreateTaskDto taskDto);
     public Task<IEnumerable<TaskEntity>> GetTasksAsync(string userId);
     public Task<TaskEntity> GetTaskById(string userId, int taskId);
     public Task DeleteTaskAsync(string userId, int taskId);
@@ -18,13 +18,14 @@ public class TaskService : ITaskService
         this.taskRepository = taskRepository;
         this.userService = userService;
     }
-    public async Task<TaskEntity> CreateTaskAsync(string userId, TaskDto taskDto)
+    public async Task<TaskEntity> CreateTaskAsync(string userId, CreateTaskDto taskDto)
     {
         var user = await userService.GetUserbyId(userId);
         if (user == null)
         {
             throw new ArgumentException("User not found");
         }
+
         var task = new TaskEntity
         {
             Id = 0,
@@ -53,26 +54,16 @@ public class TaskService : ITaskService
 
     public async Task<TaskEntity> EditTaskAsync( UpdateTaskDto updateTaskDto)
     {
-        // var user = await userService.GetUserbyId(userId);
-        // if (user == null)
-        // {
-        //     throw new ArgumentException("User not found");
-        // }
-        // var task = await taskRepository.GetTaskAsync(taskId);
-        // if (task.Id != taskId)
-        // {
-        //     throw new ArgumentException("No such task id was found");
-        // }
-
         var UpdateTask = new TaskEntity
         {
-           Id = updateTaskDto.Id,
+            Id = updateTaskDto.Id,
             Title = updateTaskDto.Title,
             Description = updateTaskDto.Description,
             CreateAt = DateTime.UtcNow,
             Deadline = updateTaskDto.Deadline,
             IsCompleted = updateTaskDto.IsCompleted,
-            IsPriority = updateTaskDto.IsPriority
+            IsPriority = updateTaskDto.IsPriority,
+            
         };
         await taskRepository.EditTaskAsync(UpdateTask);
         return UpdateTask;
