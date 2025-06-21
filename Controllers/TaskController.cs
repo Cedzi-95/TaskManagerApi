@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.VisualBasic;
 
 [ApiController]
 [Route("task")]
@@ -52,20 +53,21 @@ public class TaskController : ControllerBase
     }
 
     [HttpPut("{taskId}")]
-    public async Task<IActionResult> UpdateTask([FromBody]  TaskDto taskDto)
+    public async Task<IActionResult> UpdateTask([FromBody] UpdateTaskDto updateTaskDto)
     {
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? throw new Exception();
-        var task = await taskService.EditTaskAsync(taskDto);
+        var user = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? throw new Exception();
+
+        var result = await taskService.EditTaskAsync(updateTaskDto);
         var response = new TaskResponse
         {
-            Title = taskDto.Title,
-            Description = taskDto.Description,
+            Title = updateTaskDto.Title,
+            Description = updateTaskDto.Description,
             CreateAt = DateTime.UtcNow,
-            Deadline = taskDto.Deadline,
-            IsCompleted = taskDto.IsCompleted,
-            IsPriority = taskDto.IsCompleted
+            Deadline = updateTaskDto.Deadline,
+            IsCompleted = updateTaskDto.IsCompleted,
+            IsPriority = updateTaskDto.IsPriority
         };
-        return Created($"Created new task Id {task.Id}", response);
+        return Created($"Task '{result.Title}' has been modified: ", response);
     }
 
     [HttpDelete]

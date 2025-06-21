@@ -4,7 +4,7 @@ public interface ITaskService
     public Task<IEnumerable<TaskEntity>> GetTasksAsync(string userId);
     public Task<TaskEntity> GetTaskById(string userId, int taskId);
     public Task DeleteTaskAsync(string userId, int taskId);
-    public Task<TaskEntity> EditTaskAsync( TaskDto taskDto);
+    public Task<TaskEntity> EditTaskAsync(UpdateTaskDto updateTaskDto);
 
 }
 
@@ -51,7 +51,7 @@ public class TaskService : ITaskService
         
     }
 
-    public async Task<TaskEntity> EditTaskAsync(TaskDto taskDto)
+    public async Task<TaskEntity> EditTaskAsync( UpdateTaskDto updateTaskDto)
     {
         // var user = await userService.GetUserbyId(userId);
         // if (user == null)
@@ -66,13 +66,13 @@ public class TaskService : ITaskService
 
         var UpdateTask = new TaskEntity
         {
-
-            Title = taskDto.Title,
-            Description = taskDto.Description,
+           Id = updateTaskDto.Id,
+            Title = updateTaskDto.Title,
+            Description = updateTaskDto.Description,
             CreateAt = DateTime.UtcNow,
-            Deadline = taskDto.Deadline,
-            IsCompleted = taskDto.IsCompleted,
-            IsPriority = taskDto.IsPriority
+            Deadline = updateTaskDto.Deadline,
+            IsCompleted = updateTaskDto.IsCompleted,
+            IsPriority = updateTaskDto.IsPriority
         };
         await taskRepository.EditTaskAsync(UpdateTask);
         return UpdateTask;

@@ -31,7 +31,7 @@ public class TaskRepository : ITaskRepository
 
     public async Task EditTaskAsync(TaskEntity taskEntity)
     {
-        context.Tasks.Update(taskEntity);
+        context.Entry(taskEntity).State = EntityState.Modified;
         await context.SaveChangesAsync();
     }
 
