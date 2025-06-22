@@ -96,4 +96,20 @@ public class TaskController : ControllerBase
         await taskService.DeleteTaskAsync(userId, taskId);
         return NoContent();
     }
+
+    [HttpPatch("complete")]
+    public async Task<IActionResult> CompleteTaskAsync(int taskId, [FromBody] CompleteTaskDto request)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? throw new Exception("user not found");
+        var result = await taskService.CompleteTaskAsync(userId, taskId);
+
+        if (result)
+        {
+            return Ok(new { message = $"{request.Id} has been successfully completed" });
+        }
+        return BadRequest($"{request.Id} could not be completed");
+    }
+
+
+    
 }

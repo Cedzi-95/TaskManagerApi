@@ -10,6 +10,6 @@ public class TaskEntity
     public required bool IsCompleted { get; set; }
     public bool IsPriority { get; set; }
     [ForeignKey("userId")]
-    public UserEntity? UserId { get; set; }
+    public UserEntity? User { get; set; }
 
 }

@@ -7,6 +7,7 @@ public interface ITaskRepository
     public Task<IEnumerable<TaskEntity>> GetAllTasksAsync(string userId);
     public Task EditTaskAsync(TaskEntity taskEntity);
     public Task DeleteTaskAsync(TaskEntity taskEntity);
+    public  Task<bool> CompleteTaskAsync(int taskId, string userId);
 }
 
 public class TaskRepository : ITaskRepository
@@ -17,6 +18,7 @@ public class TaskRepository : ITaskRepository
     {
         this.context = context;
     }
+
     public async Task CreateTaskAsync(TaskEntity taskEntity)
     {
         await context.Tasks.AddAsync(taskEntity);
@@ -37,14 +39,27 @@ public class TaskRepository : ITaskRepository
 
     public async Task<IEnumerable<TaskEntity>> GetAllTasksAsync(string userId)
     {
-        var tasks = await context.Tasks.ToListAsync();
+        var tasks = await context.Tasks.Where(t => t.User!.Id == userId).ToListAsync();
         return tasks;
     }
 
     public async Task<TaskEntity> GetTaskAsync(int taskId)
     {
         return await context.Tasks.FindAsync(taskId) ?? throw new ArgumentException("task not found");
-        
-        
     }
+
+    public async Task<bool> CompleteTaskAsync(int taskId, string userId)
+    {
+        var task = await context.Tasks.Where(t => t.Id == taskId && t.User!.Id == userId)
+        .FirstOrDefaultAsync();
+
+        if (task != null)
+        {
+            task.IsCompleted = true;
+            await context.SaveChangesAsync();
+        }
+        return false;
+    }
+    
+    
 }

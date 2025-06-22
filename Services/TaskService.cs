@@ -5,6 +5,7 @@ public interface ITaskService
     public Task<TaskEntity> GetTaskById(string userId, int taskId);
     public Task DeleteTaskAsync(string userId, int taskId);
     public Task<TaskEntity> EditTaskAsync(UpdateTaskDto updateTaskDto);
+    public Task<bool> CompleteTaskAsync(string userId, int taskId);
 
 }
 
@@ -18,6 +19,15 @@ public class TaskService : ITaskService
         this.taskRepository = taskRepository;
         this.userService = userService;
     }
+
+    public async Task<bool> CompleteTaskAsync(string userId, int taskId)
+    {
+        var user = await userService.GetUserbyId(userId) ?? throw new ArgumentException("user not found");
+        var task = await taskRepository.CompleteTaskAsync(taskId, user.Id);
+
+        return task;
+    }
+
     public async Task<TaskEntity> CreateTaskAsync(string userId, CreateTaskDto taskDto)
     {
         var user = await userService.GetUserbyId(userId);
@@ -38,7 +48,7 @@ public class TaskService : ITaskService
         };
         await taskRepository.CreateTaskAsync(task);
         return task;
-         
+
     }
 
     public async Task DeleteTaskAsync(string userId, int taskId)
@@ -48,11 +58,11 @@ public class TaskService : ITaskService
         {
             throw new ArgumentException("task not found");
         }
-         await taskRepository.DeleteTaskAsync(taskEntity);
-        
+        await taskRepository.DeleteTaskAsync(taskEntity);
+
     }
 
-    public async Task<TaskEntity> EditTaskAsync( UpdateTaskDto updateTaskDto)
+    public async Task<TaskEntity> EditTaskAsync(UpdateTaskDto updateTaskDto)
     {
         var UpdateTask = new TaskEntity
         {
@@ -63,11 +73,11 @@ public class TaskService : ITaskService
             Deadline = updateTaskDto.Deadline,
             IsCompleted = updateTaskDto.IsCompleted,
             IsPriority = updateTaskDto.IsPriority,
-            
+
         };
         await taskRepository.EditTaskAsync(UpdateTask);
         return UpdateTask;
-         
+
     }
 
     public async Task<TaskEntity> GetTaskById(string userId, int taskId)
@@ -79,4 +89,6 @@ public class TaskService : ITaskService
     {
         return await taskRepository.GetAllTasksAsync(userId);
     }
+
+
 }
