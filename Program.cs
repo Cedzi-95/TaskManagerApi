@@ -11,14 +11,14 @@ public class Program
         var builder = WebApplication.CreateBuilder(args);
 
         builder.Services.AddControllers();
-         // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-        builder.Services.AddOpenApi();       
+        // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
+        builder.Services.AddOpenApi();
 
         builder.Services.AddDbContext<AppDbContext>(options =>
         options.UseNpgsql("Host=localhost;Database=taskmanager;Username=postgres;Password=password"));
 
         //in order to user ASP.NET built in tokens
-        builder.Services.AddAuthentication().AddBearerToken(IdentityConstants.BearerScheme); 
+        builder.Services.AddAuthentication().AddBearerToken(IdentityConstants.BearerScheme);
         // Add services to the container.
         builder.Services.AddAuthorization();
 
@@ -32,12 +32,23 @@ public class Program
             options.Password.RequireDigit = true;
             options.Password.RequiredLength = 6;
         });
-       
+
 
         builder.Services.AddScoped<ITaskService, TaskService>();
         builder.Services.AddScoped<ITaskRepository, TaskRepository>();
         builder.Services.AddScoped<IUserService, UserService>();
+        
 
+        builder.Services.AddCors(options =>
+      {
+          options.AddDefaultPolicy(builder =>
+          {
+              builder.WithOrigins("http://localhost:5173")
+                     .AllowAnyHeader()
+                     .AllowAnyMethod()
+                     .AllowCredentials();
+          });
+      });
 
         var app = builder.Build();
         app.MapIdentityApi<UserEntity>();
