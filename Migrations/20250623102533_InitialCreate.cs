@@ -7,7 +7,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace TaskManagerApi.Migrations
 {
     /// <inheritdoc />
-    public partial class AddInitialCreate : Migration
+    public partial class InitialCreate : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -169,14 +169,14 @@ namespace TaskManagerApi.Migrations
                     Deadline = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     IsCompleted = table.Column<bool>(type: "boolean", nullable: false),
                     IsPriority = table.Column<bool>(type: "boolean", nullable: false),
-                    userId = table.Column<string>(type: "text", nullable: true)
+                    UserId = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Tasks", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Tasks_AspNetUsers_userId",
-                        column: x => x.userId,
+                        name: "FK_Tasks_AspNetUsers_UserId",
+                        column: x => x.UserId,
                         principalTable: "AspNetUsers",
                         principalColumn: "Id");
                 });
@@ -219,9 +219,9 @@ namespace TaskManagerApi.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_Tasks_userId",
+                name: "IX_Tasks_UserId",
                 table: "Tasks",
-                column: "userId");
+                column: "UserId");
         }
 
         /// <inheritdoc />

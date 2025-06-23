@@ -39,7 +39,7 @@ public class TaskRepository : ITaskRepository
 
     public async Task<IEnumerable<TaskEntity>> GetAllTasksAsync(string userId)
     {
-        var tasks = await context.Tasks.Where(t => t.User!.Id == userId).ToListAsync();
+        var tasks = await context.Tasks.Where(t => t.UserId == userId).ToListAsync();
         return tasks;
     }
 
@@ -50,13 +50,14 @@ public class TaskRepository : ITaskRepository
 
     public async Task<bool> CompleteTaskAsync(int taskId, string userId)
     {
-        var task = await context.Tasks.Where(t => t.Id == taskId && t.User!.Id == userId)
+        var task = await context.Tasks.Where(t => t.Id == taskId && t.UserId == userId)
         .FirstOrDefaultAsync();
 
         if (task != null)
         {
             task.IsCompleted = true;
             await context.SaveChangesAsync();
+            return true;
         }
         return false;
     }

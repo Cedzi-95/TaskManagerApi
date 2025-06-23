@@ -22,20 +22,13 @@ public class TaskService : ITaskService
 
     public async Task<bool> CompleteTaskAsync(string userId, int taskId)
     {
-        var user = await userService.GetUserbyId(userId) ?? throw new ArgumentException("user not found");
-        var task = await taskRepository.CompleteTaskAsync(taskId, user.Id);
+        var task = await taskRepository.CompleteTaskAsync(taskId, userId);
 
         return task;
     }
 
     public async Task<TaskEntity> CreateTaskAsync(string userId, CreateTaskDto taskDto)
     {
-        var user = await userService.GetUserbyId(userId);
-        if (user == null)
-        {
-            throw new ArgumentException("User not found");
-        }
-
         var task = new TaskEntity
         {
             Id = 0,
@@ -44,7 +37,8 @@ public class TaskService : ITaskService
             CreateAt = DateTime.UtcNow,
             Deadline = taskDto.Deadline,
             IsCompleted = taskDto.IsCompleted,
-            IsPriority = taskDto.IsPriority
+            IsPriority = taskDto.IsPriority,
+            UserId = userId
         };
         await taskRepository.CreateTaskAsync(task);
         return task;
@@ -54,9 +48,9 @@ public class TaskService : ITaskService
     public async Task DeleteTaskAsync(string userId, int taskId)
     {
         var taskEntity = await taskRepository.GetTaskAsync(taskId);
-        if (taskEntity == null)
+        if (taskEntity == null || taskEntity.UserId != userId)
         {
-            throw new ArgumentException("task not found");
+            throw new ArgumentException("task not found or you don't have access to this task.");
         }
         await taskRepository.DeleteTaskAsync(taskEntity);
 
@@ -72,7 +66,7 @@ public class TaskService : ITaskService
             CreateAt = DateTime.UtcNow,
             Deadline = updateTaskDto.Deadline,
             IsCompleted = updateTaskDto.IsCompleted,
-            IsPriority = updateTaskDto.IsPriority,
+            IsPriority = updateTaskDto.IsPriority
 
         };
         await taskRepository.EditTaskAsync(UpdateTask);
@@ -82,7 +76,13 @@ public class TaskService : ITaskService
 
     public async Task<TaskEntity> GetTaskById(string userId, int taskId)
     {
-        return await taskRepository.GetTaskAsync(taskId);
+
+        var task = await taskRepository.GetTaskAsync(taskId);
+        if (userId != task.UserId)
+        {
+            throw new ArgumentException("You can't access this task.");
+        }
+        return task;
     }
 
     public async Task<IEnumerable<TaskEntity>> GetTasksAsync(string userId)

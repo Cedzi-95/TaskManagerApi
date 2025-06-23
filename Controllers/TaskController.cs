@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.VisualBasic;
 
@@ -9,6 +10,7 @@ public class TaskController : ControllerBase
 {
     private readonly ITaskService taskService;
     private readonly IUserService userService;
+    
 
     public TaskController(ITaskService taskService, IUserService userService)
     {
@@ -21,7 +23,7 @@ public class TaskController : ControllerBase
     public async Task<IActionResult> CreateTask([FromBody] CreateTaskDto taskDto)
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? throw new Exception();
-        var user = await userService.GetUserbyId(taskDto.UserId!);
+        var user = await userService.GetUserbyId(userId);
 
 
 
@@ -34,7 +36,7 @@ public class TaskController : ControllerBase
             CreateAt = DateTime.UtcNow,
             Deadline = taskDto.Deadline,
             IsCompleted = taskDto.IsCompleted,
-            IsPriority = taskDto.IsCompleted,
+            IsPriority = taskDto.IsPriority,
             CreatedBy = user.UserName
         };
         return Created($"Created new task Id {task.Id}", response);
@@ -98,16 +100,24 @@ public class TaskController : ControllerBase
     }
 
     [HttpPatch("complete")]
-    public async Task<IActionResult> CompleteTaskAsync(int taskId, [FromBody] CompleteTaskDto request)
+    [Authorize]
+    public async Task<IActionResult> CompleteTaskAsync([FromBody] CompleteTaskDto request)
     {
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? throw new Exception("user not found");
-        var result = await taskService.CompleteTaskAsync(userId, taskId);
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? throw new Exception();     
+
+         var task = await taskService.GetTaskById(userId, request.Id);
+    if (task == null)
+    {
+        return NotFound("Task not found or doesn't belong to user");
+    }   
+
+        var result = await taskService.CompleteTaskAsync(userId, request.Id);
 
         if (result)
         {
-            return Ok(new { message = $"{request.Id} has been successfully completed" });
+            return Ok(new { message = $"{task.Title} has been successfully completed" });
         }
-        return BadRequest($"{request.Id} could not be completed");
+        return BadRequest($"Task {task.Title} could not be completed");
     }
 
 

@@ -11,8 +11,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace TaskManagerApi.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20250621172532_AddInitialCreate")]
-    partial class AddInitialCreate
+    [Migration("20250623102533_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -182,12 +182,12 @@ namespace TaskManagerApi.Migrations
                     b.Property<string>("Title")
                         .HasColumnType("text");
 
-                    b.Property<string>("userId")
+                    b.Property<string>("UserId")
                         .HasColumnType("text");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("userId");
+                    b.HasIndex("UserId");
 
                     b.ToTable("Tasks");
                 });
@@ -309,11 +309,11 @@ namespace TaskManagerApi.Migrations
 
             modelBuilder.Entity("TaskEntity", b =>
                 {
-                    b.HasOne("UserEntity", "UserId")
+                    b.HasOne("UserEntity", "User")
                         .WithMany("Tasks")
-                        .HasForeignKey("userId");
+                        .HasForeignKey("UserId");
 
-                    b.Navigation("UserId");
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("UserEntity", b =>

@@ -5,10 +5,6 @@ public class CreateTaskDto
     public required DateTime Deadline { get; set; }
     public required bool IsCompleted { get; set; }
     public bool IsPriority { get; set; }
-    public required string? UserId { get; set; }
-    
-
-
 }
 
 public class CreateTaskResponse
@@ -47,7 +43,7 @@ public class UpdateTaskResponse
 public class CompleteTaskDto
 {
     public required int Id { get; set; }
-    public string? UserId { get; set; }
+    // public string? UserId { get; set; }
 
 }
 public class CompleteTaskResponse

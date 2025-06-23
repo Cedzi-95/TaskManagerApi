@@ -9,7 +9,8 @@ public class TaskEntity
     public required DateTime Deadline { get; set; }
     public required bool IsCompleted { get; set; }
     public bool IsPriority { get; set; }
-    [ForeignKey("userId")]
+        [ForeignKey("userId")]
+    public string? UserId { get; set; }  
     public UserEntity? User { get; set; }
 
 }
