@@ -1,8 +1,8 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
-namespace TaskManagerApi;
 
+namespace TaskManagerApi;
 
 public class Program
 {
@@ -11,62 +11,72 @@ public class Program
         var builder = WebApplication.CreateBuilder(args);
 
         builder.Services.AddControllers();
-        // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
         builder.Services.AddOpenApi();
 
         builder.Services.AddDbContext<AppDbContext>(options =>
-        options.UseNpgsql("Host=localhost;Database=taskmanager;Username=postgres;Password=password"));
+            options.UseNpgsql("Host=localhost;Database=taskmanager;Username=postgres;Password=password"));
 
-        //in order to user ASP.NET built in tokens
-        builder.Services.AddAuthentication().AddBearerToken(IdentityConstants.BearerScheme);
-        // Add services to the container.
-        builder.Services.AddAuthorization();
+        // CORS configuration - move this BEFORE authentication/authorization
+        builder.Services.AddCors(options => {
+            options.AddPolicy("AllowAll", policy => {
+                policy.AllowAnyOrigin()
+                      .AllowAnyMethod()
+                      .AllowAnyHeader();
+            });
+        });
 
+        // Add Identity services
         builder.Services.AddIdentityCore<UserEntity>()
-        .AddEntityFrameworkStores<AppDbContext>()
-        .AddApiEndpoints()
-        .AddDefaultTokenProviders();
+            .AddEntityFrameworkStores<AppDbContext>()
+            .AddApiEndpoints()
+            .AddDefaultTokenProviders();
 
+        // Configure Identity options
         builder.Services.Configure<IdentityOptions>(options =>
         {
             options.Password.RequireDigit = true;
             options.Password.RequiredLength = 6;
+            options.Password.RequireNonAlphanumeric = false;
+            options.Password.RequireUppercase = false;
+            options.Password.RequireLowercase = false;
         });
 
+        // Add authentication with bearer token
+        builder.Services.AddAuthentication().AddBearerToken(IdentityConstants.BearerScheme);
+        builder.Services.AddAuthorization();
 
+        // Add your services
         builder.Services.AddScoped<ITaskService, TaskService>();
         builder.Services.AddScoped<ITaskRepository, TaskRepository>();
         builder.Services.AddScoped<IUserService, UserService>();
-        
-
-        builder.Services.AddCors(options =>
-      {
-          options.AddDefaultPolicy(builder =>
-          {
-              builder.WithOrigins("http://localhost:5173")
-                     .AllowAnyHeader()
-                     .AllowAnyMethod()
-                     .AllowCredentials();
-          });
-      });
 
         var app = builder.Build();
-        app.MapIdentityApi<UserEntity>();
-        app.UseAuthorization();
-        app.UseAuthorization();
-        app.MapControllers();
 
-
-
-        // Configure the HTTP request pipeline.
+        // Configure the HTTP request pipeline
         if (app.Environment.IsDevelopment())
         {
             app.MapOpenApi();
             app.MapScalarApiReference();
         }
 
-        app.UseHttpsRedirection();
+        // IMPORTANT: Order matters! CORS must come before authentication
+        app.UseCors("AllowAll");
+        
+        // Don't use HTTPS redirection in development if you're using HTTP
+        if (!app.Environment.IsDevelopment())
+        {
+            app.UseHttpsRedirection();
+        }
 
+        // Authentication and authorization
+        app.UseAuthentication();
+        app.UseAuthorization();
+
+        // Map Identity API endpoints (this provides /login, /register, etc.)
+        app.MapIdentityApi<UserEntity>();
+        
+        // Map your controllers
+        app.MapControllers();
 
         app.Run();
     }

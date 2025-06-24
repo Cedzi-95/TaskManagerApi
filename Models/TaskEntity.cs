@@ -2,6 +2,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 public class TaskEntity
 {
+
     public required int Id { get; set; }
     public required string? Title { get; set; }
     public required string? Description { get; set; }
