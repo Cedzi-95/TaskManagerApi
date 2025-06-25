@@ -1,20 +1,21 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams, useNavigate } from 'react-router-dom';
 import TaskCard from '../component/taskCard';
 import { getTasks, deleteTask, updateTask } from '../api/task';
 import '../styles/viewTasksPage.css';
 
 function ViewTasksPage({ user }) {
-  const { id } = useParams(); // For viewing single task
+  const { id } = useParams();
+  const navigate = useNavigate();
   const [tasks, setTasks] = useState([]);
   const [filteredTasks, setFilteredTasks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [filters, setFilters] = useState({
     search: '',
-    status: 'all', // all, completed, pending
-    priority: 'all', // all, priority, normal
-    sortBy: 'createdAt' // createdAt, deadline, title
+    status: 'all',
+    priority: 'all',
+    sortBy: 'createdAt'
   });
 
   useEffect(() => {
@@ -28,12 +29,25 @@ function ViewTasksPage({ user }) {
   const loadTasks = async () => {
     try {
       setLoading(true);
-      const response = await getTasks();
-      setTasks(response.data || []);
       setError(null);
+      
+      const response = await getTasks();
+      console.log('Tasks response:', response); // Debug log
+      
+      // Handle the response data properly
+      const tasksData = response.data || [];
+      setTasks(tasksData);
     } catch (err) {
-      setError('Failed to load tasks');
       console.error('Load tasks error:', err);
+      
+      // Handle different types of errors
+      if (err.message.includes('401') || err.message.includes('Unauthorized')) {
+        setError('Your session has expired. Please log in again.');
+        // Optionally redirect to login
+        // navigate('/login');
+      } else {
+        setError(err.message || 'Failed to load tasks');
+      }
     } finally {
       setLoading(false);
     }
@@ -46,8 +60,8 @@ function ViewTasksPage({ user }) {
     if (filters.search) {
       const searchLower = filters.search.toLowerCase();
       filtered = filtered.filter(task =>
-        task.title.toLowerCase().includes(searchLower) ||
-        task.description.toLowerCase().includes(searchLower)
+        (task.title?.toLowerCase().includes(searchLower)) ||
+        (task.description?.toLowerCase().includes(searchLower))
       );
     }
 
@@ -69,7 +83,7 @@ function ViewTasksPage({ user }) {
     filtered.sort((a, b) => {
       switch (filters.sortBy) {
         case 'title':
-          return a.title.localeCompare(b.title);
+          return (a.title || '').localeCompare(b.title || '');
         case 'deadline':
           if (!a.deadline && !b.deadline) return 0;
           if (!a.deadline) return 1;
@@ -77,7 +91,7 @@ function ViewTasksPage({ user }) {
           return new Date(a.deadline) - new Date(b.deadline);
         case 'createdAt':
         default:
-          return new Date(b.createdAt) - new Date(a.createdAt);
+          return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
       }
     });
 
@@ -97,9 +111,10 @@ function ViewTasksPage({ user }) {
       setTasks(prev => prev.map(task =>
         task.id === taskId ? { ...task, ...updates } : task
       ));
+      setError(null); // Clear any previous errors
     } catch (err) {
-      setError('Failed to update task');
       console.error('Update task error:', err);
+      setError(err.message || 'Failed to update task');
     }
   };
 
@@ -111,9 +126,10 @@ function ViewTasksPage({ user }) {
     try {
       await deleteTask(taskId);
       setTasks(prev => prev.filter(task => task.id !== taskId));
+      setError(null); // Clear any previous errors
     } catch (err) {
-      setError('Failed to delete task');
       console.error('Delete task error:', err);
+      setError(err.message || 'Failed to delete task');
     }
   };
 

@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authentication.BearerToken;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
@@ -39,6 +40,13 @@ public class Program
             options.Password.RequireNonAlphanumeric = false;
             options.Password.RequireUppercase = false;
             options.Password.RequireLowercase = false;
+        });
+
+        // FIXED: Configure Bearer Token options with longer expiration
+        builder.Services.Configure<BearerTokenOptions>(IdentityConstants.BearerScheme, options =>
+        {
+            options.BearerTokenExpiration = TimeSpan.FromHours(2); // Set to 2 hours instead of default 1 hour
+            options.RefreshTokenExpiration = TimeSpan.FromDays(14); // 14 days for refresh token
         });
 
         // Add authentication with bearer token

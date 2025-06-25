@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.VisualBasic;
 
 [ApiController]
-[Route("task")]
+[Route("api/task")]
 public class TaskController : ControllerBase
 {
     private readonly ITaskService taskService;
@@ -81,6 +81,7 @@ public class TaskController : ControllerBase
     }
 
     [HttpGet("{taskId}")]
+    [Authorize]
     public async Task<IActionResult> GetTaskByIdAsync(int taskId)
     {
         try

@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createTask } from '../api/task';
+import { isAuthenticated } from '../api/auth';
 import '../styles/createTaskPage.css';
 
 function CreateTaskPage({ user }) {
@@ -14,6 +15,13 @@ function CreateTaskPage({ user }) {
     isPriority: false,
     isCompleted: false
   });
+
+  // Check authentication on component mount
+  useEffect(() => {
+    if (!isAuthenticated()) {
+      navigate('/login', { state: { from: '/create-task' } });
+    }
+  }, [navigate]);
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -35,24 +43,41 @@ function CreateTaskPage({ user }) {
       setLoading(true);
       setError(null);
       
+      // Format the task data properly
       const taskData = {
-        ...formData,
         title: formData.title.trim(),
         description: formData.description.trim(),
-        deadline: formData.deadline || null,
-        createdAt: new Date().toISOString()
+        deadline: formData.deadline ? new Date(formData.deadline).toISOString() : null,
+        isPriority: formData.isPriority,
+        isCompleted: formData.isCompleted
+        // createdAt is handled by backend
       };
 
-      await createTask(taskData);
+      console.log('Submitting task data:', taskData); // Debug log
       
-      // Navigate back to homepage or tasks page
+      const response = await createTask(taskData);
+      console.log('Task created successfully:', response);
+      
       navigate('/', { 
-        state: { message: 'Task created successfully!' }
+        state: { 
+          message: 'Task created successfully!',
+          newTask: response.data
+        }
       });
       
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to create task');
-      console.error('Create task error:', err);
+      console.error('Full error details:', err);
+      setError(
+        err.message || 
+        err.response?.data?.message || 
+        'Failed to create task. Please try again.'
+      );
+      
+      // If unauthorized, redirect to login
+      if (err.response?.status === 401) {
+        navigate('/login', { state: { from: '/create-task' } });
+      }
+    } finally {
       setLoading(false);
     }
   };
@@ -73,6 +98,13 @@ function CreateTaskPage({ user }) {
           {error && (
             <div className="error-alert">
               {error}
+              <button 
+                onClick={() => setError(null)} 
+                className="error-close"
+                aria-label="Close error"
+              >
+                &times;
+              </button>
             </div>
           )}
 
@@ -88,7 +120,11 @@ function CreateTaskPage({ user }) {
               required
               maxLength={100}
               disabled={loading}
+              aria-describedby="title-help"
             />
+            <small id="title-help" className="help-text">
+              Maximum 100 characters
+            </small>
           </div>
 
           <div className="form-group">
@@ -102,7 +138,11 @@ function CreateTaskPage({ user }) {
               rows={4}
               maxLength={500}
               disabled={loading}
+              aria-describedby="desc-help"
             />
+            <small id="desc-help" className="help-text">
+              Maximum 500 characters
+            </small>
           </div>
 
           <div className="form-group">
@@ -114,6 +154,7 @@ function CreateTaskPage({ user }) {
               value={formData.deadline}
               onChange={handleInputChange}
               disabled={loading}
+              min={new Date().toISOString().slice(0, 16)} // Prevent past dates
             />
           </div>
 
@@ -156,8 +197,14 @@ function CreateTaskPage({ user }) {
               type="submit"
               className="btn-create"
               disabled={loading}
+              aria-busy={loading}
             >
-              {loading ? 'Creating...' : 'Create Task'}
+              {loading ? (
+                <>
+                  <span className="spinner" aria-hidden="true"></span>
+                  Creating...
+                </>
+              ) : 'Create Task'}
             </button>
           </div>
         </form>

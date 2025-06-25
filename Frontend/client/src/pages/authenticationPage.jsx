@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { loginUser } from '../api/auth';
+import { registerUser } from '../api/auth';
 import '../styles/authPages.css';
 
 function LoginPage({ onLogin }) {
@@ -122,9 +123,11 @@ function LoginPage({ onLogin }) {
 }
 
 // RegisterPage.jsx
+// RegisterPage.jsx
 function RegisterPage({ onLogin }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [success, setSuccess] = useState(false);
   const [formData, setFormData] = useState({
     username: '',
     email: '',
@@ -147,30 +150,38 @@ function RegisterPage({ onLogin }) {
       setError('Please fill in all required fields');
       return;
     }
-
+  
     if (formData.password !== formData.confirmPassword) {
       setError('Passwords do not match');
       return;
     }
-
+  
     if (formData.password.length < 6) {
       setError('Password must be at least 6 characters long');
       return;
     }
-
+  
     try {
       setLoading(true);
       setError(null);
+      setSuccess(false);
       
-      // FIXED: ASP.NET Identity API only needs email and password for registration
-      // Username is typically not required unless you've customized the Identity model
       const response = await registerUser(formData.email, formData.password);
       
-      // FIXED: Handle the actual ASP.NET Identity response structure
       if (response) {
-        // Registration successful, now login the user
-        const loginResponse = await loginUser(formData.email, formData.password);
-        onLogin(loginResponse);
+        setSuccess(true);
+        setLoading(false);
+        
+        // Auto-login after 2 seconds to show success message
+        setTimeout(async () => {
+          try {
+            const loginResponse = await loginUser(formData.email, formData.password);
+            onLogin(loginResponse);
+          } catch (loginError) {
+            console.error('Auto-login failed:', loginError);
+            setError('Account created! Please sign in manually.');
+          }
+        }, 2000);
       }
       
     } catch (err) {
@@ -193,63 +204,71 @@ function RegisterPage({ onLogin }) {
           <p>Sign up for a new account</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="auth-form">
-          {error && (
-            <div className="error-alert">
-              {error}
+        {success ? (
+          <div className="success-message">
+            <h3>🎉 Account Created Successfully!</h3>
+            <p>You will be automatically logged in shortly...</p>
+            <div className="loading-spinner"></div>
+          </div>
+        ) : (
+          <form onSubmit={handleSubmit} className="auth-form">
+            {error && (
+              <div className="error-alert">
+                {error}
+              </div>
+            )}
+
+            <div className="form-group">
+              <label htmlFor="email">Email</label>
+              <input
+                type="email"
+                id="email"
+                name="email"
+                value={formData.email}
+                onChange={handleInputChange}
+                placeholder="Enter your email"
+                required
+                disabled={loading}
+              />
             </div>
-          )}
 
-          <div className="form-group">
-            <label htmlFor="email">Email</label>
-            <input
-              type="email"
-              id="email"
-              name="email"
-              value={formData.email}
-              onChange={handleInputChange}
-              placeholder="Enter your email"
-              required
+            <div className="form-group">
+              <label htmlFor="password">Password</label>
+              <input
+                type="password"
+                id="password"
+                name="password"
+                value={formData.password}
+                onChange={handleInputChange}
+                placeholder="Enter your password (min 6 characters)"
+                required
+                disabled={loading}
+              />
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="confirmPassword">Confirm Password</label>
+              <input
+                type="password"
+                id="confirmPassword"
+                name="confirmPassword"
+                value={formData.confirmPassword}
+                onChange={handleInputChange}
+                placeholder="Confirm your password"
+                required
+                disabled={loading}
+              />
+            </div>
+
+            <button
+              type="submit"
+              className="auth-submit-btn"
               disabled={loading}
-            />
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="password">Password</label>
-            <input
-              type="password"
-              id="password"
-              name="password"
-              value={formData.password}
-              onChange={handleInputChange}
-              placeholder="Enter your password (min 6 characters)"
-              required
-              disabled={loading}
-            />
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="confirmPassword">Confirm Password</label>
-            <input
-              type="password"
-              id="confirmPassword"
-              name="confirmPassword"
-              value={formData.confirmPassword}
-              onChange={handleInputChange}
-              placeholder="Confirm your password"
-              required
-              disabled={loading}
-            />
-          </div>
-
-          <button
-            type="submit"
-            className="auth-submit-btn"
-            disabled={loading}
-          >
-            {loading ? 'Creating Account...' : 'Create Account'}
-          </button>
-        </form>
+            >
+              {loading ? 'Creating Account...' : 'Create Account'}
+            </button>
+          </form>
+        )}
 
         <div className="auth-footer">
           <p>
@@ -263,5 +282,4 @@ function RegisterPage({ onLogin }) {
     </div>
   );
 }
-
 export { LoginPage, RegisterPage };

@@ -3,198 +3,284 @@ import { default as axios } from 'axios';
 const API_BASE_URL = 'http://localhost:5041';
 const isDevelopment = true;
 
-// 1. Enhanced Axios instance configuration
+// Enhanced Axios instance configuration
 const authApi = axios.create({
-    baseURL: 'http://localhost:5041',
+    baseURL: 'http://localhost:5041/api', // Added /api prefix - adjust if your backend expects it
     headers: {
-      'Content-Type': 'application/json',
-      'X-Content-Type-Options': 'nosniff',
-      'X-Frame-Options': 'DENY'
-    }
-  });
+        // In your axios.create config:
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('authToken')}` // Changed from 'token' to 'authToken'
+        }
+    },
+    timeout: 10000 // Add timeout to prevent hanging requests
+});
 
-// 2. Improved Request Interceptor
+// Request Interceptor
 authApi.interceptors.request.use(
     (config) => {
         const token = localStorage.getItem('authToken');
-        
+
         if (token) {
             config.headers.Authorization = `Bearer ${token}`;
         }
 
-        // Logging for development
         if (isDevelopment) {
-            console.log('Request:', {
-                url: config.url,
-                method: config.method,
-                headers: config.headers,
-                data: config.data
+            console.log('🚀 API Request:', {
+                url: `${config.baseURL}${config.url}`,
+                method: config.method?.toUpperCase(),
+                hasToken: !!token,
+                tokenPreview: token ? `${token.substring(0, 20)}...` : 'none',
+                timestamp: new Date().toISOString()
             });
         }
 
         return config;
     },
     (error) => {
-        if (isDevelopment) {
-            console.error('Request Error:', error);
-        }
+        console.error('❌ Request Error:', error);
         return Promise.reject(error);
     }
 );
 
-// 3. Comprehensive Response Interceptor
+// Response Interceptor
 authApi.interceptors.response.use(
     (response) => {
         if (isDevelopment) {
-            console.log('Response:', {
+            console.log('✅ Response Success:', {
                 status: response.status,
-                data: response.data,
-                headers: response.headers
+                url: response.config.url,
+                dataSize: JSON.stringify(response.data || {}).length,
+                timestamp: new Date().toISOString()
             });
         }
         return response;
     },
     async (error) => {
-        if (isDevelopment) {
-            console.error('Response Error:', error);
-        }
+        console.error('❌ Response Error:', {
+            status: error.response?.status,
+            statusText: error.response?.statusText,
+            message: error.response?.data?.message || error.message,
+            url: error.config?.url,
+            fullUrl: error.config ? `${error.config.baseURL}${error.config.url}` : 'unknown',
+            timestamp: new Date().toISOString()
+        });
 
         const originalRequest = error.config;
         const isUnauthorized = error.response?.status === 401;
-        const hasToken = !!localStorage.getItem('authToken');
+        const hasRefreshToken = !!localStorage.getItem('refreshToken');
 
-        // 4. Token Refresh Logic
-        if (isUnauthorized && hasToken && !originalRequest._retry) {
+        // Token refresh logic for Identity API
+        if (isUnauthorized && hasRefreshToken && !originalRequest._retry) {
             originalRequest._retry = true;
-            
+
             try {
+                console.log('🔄 Attempting token refresh...');
                 const refreshToken = localStorage.getItem('refreshToken');
-                const response = await axios.post(`${API_BASE_URL}/auth/refresh`, { refreshToken });
-                
-                localStorage.setItem('authToken', response.data.accessToken);
-                localStorage.setItem('refreshToken', response.data.refreshToken);
-                
-                originalRequest.headers.Authorization = `Bearer ${response.data.accessToken}`;
+
+                // Identity API refresh endpoint - use base URL without /api prefix
+                const refreshResponse = await axios.post(`${API_BASE_URL}/refresh`, {
+                    refreshToken: refreshToken
+                });
+
+                console.log('✅ Token refresh successful');
+
+                // Identity API returns access_token and refresh_token
+                if (refreshResponse.data.accessToken) {
+                    localStorage.setItem('authToken', refreshResponse.data.accessToken);
+                    originalRequest.headers.Authorization = `Bearer ${refreshResponse.data.accessToken}`;
+                }
+                if (refreshResponse.data.refreshToken) {
+                    localStorage.setItem('refreshToken', refreshResponse.data.refreshToken);
+                }
+
                 return authApi(originalRequest);
             } catch (refreshError) {
-                // 5. Cleanup and redirect on refresh failure
+                console.error('❌ Token refresh failed:', refreshError);
+
+                // Clear tokens and redirect
                 localStorage.removeItem('authToken');
                 localStorage.removeItem('refreshToken');
+                localStorage.removeItem('userInfo'); // Clear any cached user info
+
+                // Show user-friendly message
+                alert('Your session has expired. Please log in again.');
                 window.location.href = '/login?sessionExpired=true';
                 return Promise.reject(refreshError);
             }
-        }
-
-        // 6. Enhanced Error Handling
-        if (error.response) {
-            // Server responded with error status (4xx, 5xx)
-            switch (error.response.status) {
-                case 400:
-                    console.error('Bad Request:', error.response.data);
-                    break;
-                case 403:
-                    window.location.href = '/unauthorized';
-                    break;
-                case 404:
-                    console.error('Not Found:', error.config.url);
-                    break;
-                case 500:
-                    console.error('Server Error:', error.response.data);
-                    break;
-                default:
-                    console.error('Unhandled Error:', error);
-            }
-        } else if (error.request) {
-            // Request was made but no response received
-            console.error('Network Error:', 'No response received');
-        } else {
-            // Something else happened
-            console.error('Request Setup Error:', error.message);
         }
 
         return Promise.reject(error);
     }
 );
 
-// 7. Security Considerations
-if (!isDevelopment) {
-    authApi.defaults.headers.common['X-Content-Type-Options'] = 'nosniff';
-    authApi.defaults.headers.common['X-Frame-Options'] = 'DENY';
-}
-
-// FIXED: Auth functions with correct ASP.NET Identity API endpoints and structure
+// FIXED: Identity API login function
 export const loginUser = async (email, password) => {
     try {
         const requestData = {
             email: email,
             password: password
         };
-        
-        console.log('Sending login request with data:', requestData);
-        
-        // Use the correct Identity API endpoint and structure
-        const response = await authApi.post('/login', requestData);
-        
-        // Store the tokens from the response
+
+        console.log('🔐 Attempting login for:', email);
+
+        // Identity API login endpoint - use base URL without /api prefix
+        const response = await axios.post(`${API_BASE_URL}/login?useCookies=false&useSessionCookies=false`, requestData);
+
+        console.log('✅ Login successful');
+
+        // Identity API returns accessToken and refreshToken
         if (response.data.accessToken) {
             localStorage.setItem('authToken', response.data.accessToken);
+            console.log('💾 Access token stored');
         }
         if (response.data.refreshToken) {
             localStorage.setItem('refreshToken', response.data.refreshToken);
+            console.log('💾 Refresh token stored');
         }
-        
+
+        // Test the token after a brief delay to ensure it's properly set
+        setTimeout(async () => {
+            try {
+                await testToken();
+            } catch (testError) {
+                console.warn('⚠️ Initial token test failed, but login succeeded');
+            }
+        }, 500);
+
         return response.data;
     } catch (error) {
-        console.error('Login error:', error);
-        // Log the actual request data for debugging
-        if (error.config?.data) {
-            console.error('Request data that failed:', error.config.data);
+        console.error('❌ Login error:', error);
+        console.error('Response data:', error.response?.data);
+
+        // Provide more specific error messages
+        if (error.response?.status === 400) {
+            throw new Error('Invalid email or password');
+        } else if (error.response?.status === 429) {
+            throw new Error('Too many login attempts. Please try again later.');
+        } else if (error.code === 'ECONNREFUSED') {
+            throw new Error('Cannot connect to server. Please check if the server is running.');
         }
+
         throw error;
     }
 };
 
+// FIXED: Identity API register function
 export const registerUser = async (email, password) => {
     try {
         const requestData = {
             email: email,
             password: password
         };
-        
-        console.log('Sending registration request with data:', requestData);
-        
-        // Use the correct Identity API endpoint and structure
-        const response = await authApi.post('/register', requestData);
+
+        console.log('📝 Attempting registration for:', email);
+
+        // Identity API register endpoint - use base URL without /api prefix
+        const response = await axios.post(`${API_BASE_URL}/register`, requestData);
+
+        console.log('✅ Registration successful');
         return response.data;
     } catch (error) {
-        console.error('Registration error:', error);
+        console.error('❌ Registration error:', error);
+        console.error('Response data:', error.response?.data);
+
+        // Provide more specific error messages
+        if (error.response?.status === 400) {
+            const errorData = error.response.data;
+            if (errorData.errors) {
+                // Extract validation errors
+                const errorMessages = Object.values(errorData.errors).flat();
+                throw new Error(errorMessages.join(', '));
+            }
+            throw new Error('Registration failed. Please check your input.');
+        }
+
         throw error;
     }
 };
 
-// Additional helper function to logout
+// Logout function
 export const logoutUser = async () => {
     try {
-        // Clear local storage
+        console.log('👋 Logging out...');
+
+        // Optional: Call logout endpoint if your API has one
+        // await authApi.post('/logout');
+
+        // Clear tokens
         localStorage.removeItem('authToken');
         localStorage.removeItem('refreshToken');
-        
-        // Optional: call logout endpoint if your API has one
-        // await authApi.post('/logout');
-        
+        localStorage.removeItem('userInfo');
+
+        console.log('✅ Logout successful');
         return true;
     } catch (error) {
-        console.error('Logout error:', error);
-        // Still clear local storage even if API call fails
+        console.error('❌ Logout error:', error);
+        // Even if logout fails, clear local storage
         localStorage.removeItem('authToken');
         localStorage.removeItem('refreshToken');
+        localStorage.removeItem('userInfo');
         return true;
     }
 };
 
-// Helper function to check if user is authenticated
+// Check if user is authenticated
 export const isAuthenticated = () => {
-    return !!localStorage.getItem('authToken');
+    const token = localStorage.getItem('authToken');
+    if (!token) {
+        console.log('🔒 No auth token found');
+        return false;
+    }
+
+    console.log('🔑 Auth token found');
+    return true;
+};
+
+// Test function to check if token is working
+export const testToken = async () => {
+    try {
+        // Use authApi (which includes /api prefix) for this endpoint
+        const response = await authApi.get('/manage/info');
+        console.log('✅ Token is valid');
+        return true;
+    } catch (error) {
+        console.error('❌ Token validation failed:', error);
+        if (error.response?.status === 401) {
+            console.log('🔄 Clearing invalid tokens');
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('refreshToken');
+        }
+        return false;
+    }
+};
+
+// Helper to check current auth status
+export const checkAuthStatus = () => {
+    const token = localStorage.getItem('authToken');
+    const refreshToken = localStorage.getItem('refreshToken');
+
+    const status = {
+        hasAccessToken: !!token,
+        hasRefreshToken: !!refreshToken,
+        isAuthenticated: !!token,
+        tokenLength: token?.length || 0,
+        refreshTokenLength: refreshToken?.length || 0
+    };
+
+    console.log('📊 Auth Status:', status);
+    return status;
+};
+
+// Helper function to get user info
+export const getUserInfo = async () => {
+    try {
+        const response = await authApi.get('/manage/info');
+        return response.data;
+    } catch (error) {
+        console.error('❌ Failed to get user info:', error);
+        throw error;
+    }
 };
 
 export default authApi;
