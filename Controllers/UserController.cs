@@ -60,7 +60,7 @@ public class UserController : ControllerBase
         }
         catch
         {
-            return BadRequest($"There was an issue deleting this user");
+            return BadRequest($"There was an issue deleting user.");
         }
 
     }
