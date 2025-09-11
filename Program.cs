@@ -18,8 +18,10 @@ public class Program
             options.UseNpgsql("Host=localhost;Database=taskmanager;Username=postgres;Password=password"));
 
         // CORS configuration - move this BEFORE authentication/authorization
-        builder.Services.AddCors(options => {
-            options.AddPolicy("AllowAll", policy => {
+        builder.Services.AddCors(options =>
+        {
+            options.AddPolicy("AllowAll", policy =>
+            {
                 policy.AllowAnyOrigin()
                       .AllowAnyMethod()
                       .AllowAnyHeader();
@@ -69,12 +71,17 @@ public class Program
 
         // IMPORTANT: Order matters! CORS must come before authentication
         app.UseCors("AllowAll");
-        
+
         // Don't use HTTPS redirection in development if you're using HTTP
         if (!app.Environment.IsDevelopment())
         {
             app.UseHttpsRedirection();
         }
+
+
+        // Serve static files (React build)
+        app.UseDefaultFiles();
+        app.UseStaticFiles();
 
         // Authentication and authorization
         app.UseAuthentication();
@@ -82,9 +89,12 @@ public class Program
 
         // Map Identity API endpoints (this provides /login, /register, etc.)
         app.MapIdentityApi<UserEntity>();
-        
+
         // Map your controllers
         app.MapControllers();
+        
+        // Fallback: send everything else to React index.html
+        app.MapFallbackToFile("index.html");
 
         app.Run();
     }
