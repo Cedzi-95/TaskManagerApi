@@ -15,9 +15,9 @@ public class Program
         builder.Services.AddOpenApi();
 
         builder.Services.AddDbContext<AppDbContext>(options =>
-            options.UseNpgsql("Host=localhost;Database=taskmanager;Username=postgres;Password=password"));
+            options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-        // CORS configuration - move this BEFORE authentication/authorization
+        // CORS configuration 
         builder.Services.AddCors(options =>
         {
             options.AddPolicy("AllowAll", policy =>
