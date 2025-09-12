@@ -18,7 +18,7 @@ Deployment workflow is configured in `.github/workflows/` and automatically runs
 ## 🔧 Tech Stack
 - **.NET Core Web API**
 - **Entity Framework Core**
-- **SQL Server**
+- **PostgreSQL Server**
 - **Azure App Service (CI/CD via GitHub Actions)**
 
 ---
