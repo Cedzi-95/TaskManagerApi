@@ -32,7 +32,8 @@ public class TaskService : ITaskService
         var task = new TaskEntity
         {
             Id = 0,
-            Title = taskDto.Title!,
+            Title = taskDto.Title!
+            ,
             Description = taskDto.Description,
             CreateAt = DateTime.UtcNow,
             Deadline = taskDto.Deadline,
