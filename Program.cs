@@ -2,6 +2,8 @@ using Microsoft.AspNetCore.Authentication.BearerToken;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
+using TaskManagerApi.Repositories;
+using TaskManagerApi.Services;
 
 namespace TaskManagerApi;
 

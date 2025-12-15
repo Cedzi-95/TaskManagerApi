@@ -1,3 +1,7 @@
+using TaskManagerApi.Models;
+using TaskManagerApi.Repositories;
+
+namespace TaskManagerApi.Services;
 public interface ITaskService
 {
     public Task<TaskEntity> CreateTaskAsync(string userId, CreateTaskDto taskDto);
