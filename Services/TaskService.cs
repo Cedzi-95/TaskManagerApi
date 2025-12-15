@@ -16,12 +16,12 @@ public interface ITaskService
 public class TaskService : ITaskService
 {
     private readonly ITaskRepository taskRepository;
-    // private readonly IUserService userService;
+    private readonly IUserService userService;
 
     public TaskService(ITaskRepository taskRepository, IUserService userService)
     {
         this.taskRepository = taskRepository;
-        // this.userService = userService;
+        this.userService = userService;
     }
 
     public async Task<bool> CompleteTaskAsync(string userId, int taskId)
