@@ -1,3 +1,4 @@
+namespace TaskManagerApi.Models;
 using System.ComponentModel.DataAnnotations.Schema;
 
 public class TaskEntity

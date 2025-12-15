@@ -1,4 +1,6 @@
+namespace TaskManagerApi.Repositories;
 using Microsoft.EntityFrameworkCore;
+using TaskManagerApi.Models;
 
 public interface ITaskRepository
 {
