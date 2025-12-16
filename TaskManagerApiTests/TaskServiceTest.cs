@@ -4,6 +4,12 @@ using TaskManagerApi.Services;
 using TaskManagerApi.Repositories;
 using TaskManagerApi.Models;
 using Microsoft.VisualBasic;
+using System.Runtime.CompilerServices;
+using System.ComponentModel.DataAnnotations;
+using System.Runtime.InteropServices.Marshalling;
+using System.Net.WebSockets;
+using System.Reflection.Metadata;
+using System.Linq.Expressions;
 
 namespace TaskManagerApiTests;
 
@@ -115,4 +121,49 @@ public class TaskServiceTest
         Assert.Equal("Task 1", taskList[0].Title);
         _mockTaskRepository.Verify(repo => repo.GetAllTasksAsync(testUserId), Times.Once);
     }
+
+
+
+    [Fact]
+    public async Task GetAsync_ShouldReturnTask()
+    {
+        //Arrange
+        var testUserId = "1";
+        var task = new TaskEntity
+        {
+            Id = 1,
+              Title = "Task 1",
+              Description = "First task description",
+              CreateAt = DateTime.Parse("2025-06-23 10:29:49.221679+00"),
+              Deadline = DateTime.Parse("2025-06-25 10:29:49.221679+00"),
+              IsCompleted = false,
+              IsPriority = true,
+              UserId = "1"
+        };
+        _mockTaskRepository.
+        Setup(repo => repo.GetTaskAsync(1)).ReturnsAsync(task);
+        
+        //Act
+        var result = await _taskService.GetTaskById(testUserId, 1);
+
+        //Assert
+        Assert.NotNull(result);
+        Assert.Equal("Task 1", result.Title);
+        _mockTaskRepository.Verify(repo => repo.GetTaskAsync(1), Times.Once);
+
+    }
+
+
+    // [Fact]
+    // public async Task RemoveAsync_ShouldRemoveTask()
+    // {
+    //     //Arrange
+    //     var testUserId = "1";
+    //     _mockTaskRepository
+    //     .Setup(repo => repo.DeleteTaskAsync(testUserId, "1")).ReturnsAsync();
+
+    //     //Act
+    //     await _taskService.De
+
+    // }
 }
