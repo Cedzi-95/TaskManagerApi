@@ -154,16 +154,35 @@ public class TaskServiceTest
     }
 
 
-    // [Fact]
-    // public async Task RemoveAsync_ShouldRemoveTask()
-    // {
-    //     //Arrange
-    //     var testUserId = "1";
-    //     _mockTaskRepository
-    //     .Setup(repo => repo.DeleteTaskAsync(testUserId, "1")).ReturnsAsync();
+    [Fact]
+    public async Task RemoveAsync_ShouldRemoveTask()
+    {
+        //Arrange: mocking an entity to delete
+        var testUserId = "1";
+        var task = new TaskEntity
+        {
+            Id = 1,
+              Title = "Task 1",
+              Description = "First task description",
+              CreateAt = DateTime.Parse("2025-06-23 10:29:49.221679+00"),
+              Deadline = DateTime.Parse("2025-06-25 10:29:49.221679+00"),
+              IsCompleted = false,
+              IsPriority = true,
+              UserId = "1"
+        };
+     _mockTaskRepository.
+        Setup(repo => repo.GetTaskAsync(1)).ReturnsAsync(task);
+        
+        var result = await _taskService.GetTaskById(testUserId, 1);
 
-    //     //Act
-    //     await _taskService.De
+        _mockTaskRepository
+        .Setup(repo => repo.DeleteTaskAsync(result));
 
-    // }
+        //Act
+        await _taskService.DeleteTaskAsync(testUserId, result.Id);
+
+        //Assert
+        _mockTaskRepository.Verify(repo => repo.DeleteTaskAsync(result), Times.Once);
+
+    }
 }
