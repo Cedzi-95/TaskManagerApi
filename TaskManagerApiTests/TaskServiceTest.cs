@@ -25,24 +25,31 @@ public class TaskServiceTest
     public async Task CreateTaskAsync_ShouldAddNewTask()
     {
         //Arrange: mock data to create a new task
-        var newTask = new TaskEntity
+        var testUserId = "1";
+        var taskDto = new CreateTaskDto
         {
              Title = "Task 1",
               Description = "First task description",
-              CreateAt = DateTime.Parse("2025-06-23 10:29:49.221679+00"),
               Deadline = DateTime.Parse("2025-06-25 10:29:49.221679+00"),
               IsCompleted = false,
               IsPriority = true,
-              UserId = "1"
         };
-        _mockTaskRepository.Setup(repo => repo.CreateTaskAsync(newTask)).ReturnsAsync(Task.CompletedTask);
+
+        _mockTaskRepository
+        .Setup(repo => repo.CreateTaskAsync(It.IsAny<TaskEntity>()))
+        .Returns(Task.CompletedTask);
 
         //Act
-        var result = await _taskService.CreateTaskAsync(newTask);
+        var result = await _taskService.CreateTaskAsync(testUserId, taskDto);
 
         //Assert
-        Assert.Equal(newTask, result); //Check that the result matches the mock data
-        _mockTaskRepository.Verify(repo => repo.CreateTaskAsync(newTask), times.Once); //Make sure the createTaskAsync was called once
+        Assert.NotNull(result);
+        Assert.Equal(taskDto.Title, result.Title); 
+        Assert.Equal(taskDto.Description, result.Description);
+        Assert.Equal(testUserId, result.UserId);
+
+        //Make sure the createTaskAsync was called once
+        _mockTaskRepository.Verify(repo => repo.CreateTaskAsync(It.IsAny<TaskEntity>()), Times.Once); 
     }
 
 
