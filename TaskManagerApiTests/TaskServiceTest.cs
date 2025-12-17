@@ -185,4 +185,21 @@ public class TaskServiceTest
         _mockTaskRepository.Verify(repo => repo.DeleteTaskAsync(result), Times.Once);
 
     }
+
+    [Fact]
+    public async Task Should_CompleteTask()
+    {
+         //Arrange: mocking an entity to complete
+        var testUserId = "1";
+     _mockTaskRepository.
+       Setup(repo => repo.CompleteTaskAsync(1, testUserId)).ReturnsAsync(true);
+
+       //Act
+       var result = await _taskService.CompleteTaskAsync(testUserId, 1);
+
+       //Assert
+       Assert.True(result);
+       _mockTaskRepository.Verify(repo => repo.CompleteTaskAsync(1, testUserId), Times.Once);
+
+    }
 }
