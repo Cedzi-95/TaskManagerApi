@@ -173,12 +173,12 @@ public class TaskServiceTest
      _mockTaskRepository.
         Setup(repo => repo.GetTaskAsync(1)).ReturnsAsync(task);
         
+        //Act     
         var result = await _taskService.GetTaskById(testUserId, 1);
 
         _mockTaskRepository
         .Setup(repo => repo.DeleteTaskAsync(result));
 
-        //Act
         await _taskService.DeleteTaskAsync(testUserId, result.Id);
 
         //Assert
